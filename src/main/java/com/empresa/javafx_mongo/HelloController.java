@@ -1,65 +1,57 @@
 package com.empresa.javafx_mongo;
 
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import org.bson.Document;
 
 public class HelloController {
     @FXML
     private Label welcomeText;
 
     @FXML
-    private TableView<TableData> dataTableView;
+    private TextField nameField;
 
     @FXML
-    private TableColumn<TableData, String> column1;
+    private TextField emailField;
 
     @FXML
-    private TableColumn<TableData, String> column2;
+    private TextField passwordField;
+
+    @FXML
+    private ListView lv_datos;
 
     @FXML
     protected void onHelloButtonClick() {
         welcomeText.setText("Welcome to JavaFX Application!");
-        MongoClient cliente = MongoClients.create("mongodb+srv://admin:admin@javaadri.bydxigr.mongodb.net/");
+        MongoClient cliente = MongoClients.create("mongodb+srv://adri:adri@cluster0.uay2677.mongodb.net/");
         System.out.println(cliente);
-        MongoDatabase db = cliente.getDatabase("javaadri");
-        System.out.println(db);
+        MongoDatabase db = cliente.getDatabase("test");
+        MongoCollection tabla = db.getCollection("usuario");
+        System.out.println(tabla);
 
-        // Define cómo se deben llenar las columnas
-        column1.setCellValueFactory(new PropertyValueFactory<>("data1"));
-        column2.setCellValueFactory(new PropertyValueFactory<>("data2"));
+        String name = nameField.getText();
+        String email = emailField.getText();
+        String password = passwordField.getText();
 
-        // Crea y añade datos a la tabla
-        ObservableList<TableData> data = FXCollections.observableArrayList(
-                new TableData("Data 1", "Data 2"),
-                new TableData("Data 3", "Data 4")
-        );
-        dataTableView.setItems(data);
-    }
+        Document newUser = new Document("name", name)
+                .append("email", email)
+                .append("password", password);
 
-    // Clase para representar los datos en la tabla
-    public static class TableData {
-        private String data1;
-        private String data2;
+        tabla.insertOne(newUser);
 
-        public TableData(String data1, String data2) {
-            this.data1 = data1;
-            this.data2 = data2;
+        ObservableList<String> documentos = FXCollections.observableArrayList();
+        MongoCursor<Document> cursor = tabla.find().iterator();
+        while(cursor.hasNext()){
+            Document doc = cursor.next();
+            documentos.add(doc.toJson());
+            System.out.println(doc+"-----------------");
         }
-
-        public String getData1() {
-            return data1;
-        }
-
-        public String getData2() {
-            return data2;
-        }
+        System.out.println(documentos);
+        lv_datos.setItems(documentos);
     }
 }
